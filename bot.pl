@@ -31,19 +31,20 @@ my $theme_note = $is_manual ? "manual" : "automatic";
 chomp($theme);
 
 # pull image url from giphy
-my $giphy_search = "https://api.giphy.com/v1/gifs/search?api_key=$giphy_key&q=".uri_escape($theme)."&offset=0&limit=1";
-chomp(my $img_url = qx/curl -qL "$giphy_search" | jq -r .data[0].url/);
+my $giphy_search = "https://api.giphy.com/v1/gifs/search?api_key=$giphy_key&q=".uri_escape($theme)."&offset=0&limit=10";
+chomp(my $img_url = qx/curl -qL "$giphy_search" | jq -r '.data[] | select(.images.original.size|tonumber| . <= 1000000)| .url'|shuf -n1/);
 my $have_img = $img_url =~ m/http/;
 my $txt = $have_img?"today's $theme_note theme: <$img_url|$theme>": "no giphy for *$theme*! :scream:";
 
 # init slack
 my $slack = WebService::Slack::WebApi->new(token => $slack_token) or die "no slack! $!";
 
+my $edit_note = "; <https://github.com/LabNeuroCogDevel/slacktheme_bot/edit/master/manual-theme.txt|set tomorrow's theme>";
 # posting message to specified channel and getting message description
 my $posted_message = $slack->chat->post_message(
     channel  => '@will', # required
     #channel  => 'random', # required
-    text     => $txt,       # required (not required if 'attachments' argument exists)
+    text     => "$txt $edit_note",       # required (not required if 'attachments' argument exists)
 );
 
 #say Dumper($posted_message);
