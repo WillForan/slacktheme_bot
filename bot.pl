@@ -14,7 +14,11 @@ use strict; use warnings; use feature qq/say/;
 use WebService::Slack::WebApi;
 use File::Slurp;
 use URI::Escape;
+use FindBin;
 use Data::Dumper;
+
+# auth info and themes are all in the script directory
+chdir $FindBin::Bin;
 
 # read in api key/tokens
 chomp(my $slack_token = read_file('.oauth'));
