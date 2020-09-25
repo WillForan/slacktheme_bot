@@ -42,7 +42,7 @@ my $slack = WebService::Slack::WebApi->new(token => $slack_token) or die "no sla
 my $edit_note = "; <https://github.com/LabNeuroCogDevel/slacktheme_bot/edit/master/manual-theme.txt|set tomorrow's theme>";
 # posting message to specified channel and getting message description
 my $posted_message = $slack->chat->post_message(
-    channel  => '@will', # required
+    channel  => 'random', # required
     #channel  => 'random', # required
     text     => "$txt $edit_note",       # required (not required if 'attachments' argument exists)
 );
