@@ -98,7 +98,7 @@ sub get_setter(){
 
 my $setter = "@".get_setter();
 my $giphy_txt = GiphyTheme::giphy_text();
-# my $edit_note = "; <https://github.com/LabNeuroCogDevel/slacktheme_bot/edit/master/manual-theme.txt|set tomorrow's theme>";
+# my $edit_note = ". Set tomorrow's theme on <https://github.com/LabNeuroCogDevel/slacktheme_bot/edit/master/manual-theme.txt|github>";
 my $slack = Slack->new;
 my $resp = $slack->msg("<$setter> sets the theme next!", 'random');
 $resp = $slack->msg("It's your turn to set the theme tomorrow. Here's some motivation: $giphy_txt", $setter);
