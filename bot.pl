@@ -17,6 +17,11 @@ no warnings qw/experimental::signatures/;
 package GiphyTheme;
 use File::Slurp;
 use URI::Escape;
+use FindBin;
+use Data::Dumper;
+
+# auth info and themes are all in the script directory
+chdir $FindBin::Bin;
 
 sub get_theme(){
    #system('git pull'); # update maybe
@@ -28,7 +33,6 @@ sub get_theme(){
   chomp($theme);
   return($theme_note, $theme);
 }
-
 
 sub get_giphy($theme){
   chomp(my $giphy_key = read_file('.giphy'));
@@ -97,4 +101,4 @@ my $giphy_txt = GiphyTheme::giphy_text();
 # my $edit_note = "; <https://github.com/LabNeuroCogDevel/slacktheme_bot/edit/master/manual-theme.txt|set tomorrow's theme>";
 my $slack = Slack->new;
 my $resp = $slack->msg("<$setter> sets the theme next!", 'random');
-$resp = $slack->msg("It's your turn to set the theme tomorrow. Here's some motivation: $giphy_txt", '@will');
+$resp = $slack->msg("It's your turn to set the theme tomorrow. Here's some motivation: $giphy_txt", $setter);
