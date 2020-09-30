@@ -17,11 +17,6 @@ no warnings qw/experimental::signatures/;
 package GiphyTheme;
 use File::Slurp;
 use URI::Escape;
-use FindBin;
-use Data::Dumper;
-
-# auth info and themes are all in the script directory
-chdir $FindBin::Bin;
 
 sub get_theme(){
    #system('git pull'); # update maybe
@@ -70,7 +65,7 @@ sub slack_login() {
    return($slack);
 }
 
-use Class::Tiny { auth => &slack_login };
+use Class::Tiny { auth => sub {slack_login} };
 sub msg($self, $txt, $to="random") {
     # to can be a person (e.g. @name) or channel (e.g. random)
     # posting message to specified channel and getting message description
@@ -86,9 +81,12 @@ sub msg($self, $txt, $to="random") {
 package main;
 use Data::Dumper;
 use File::Slurp;
+use FindBin;
+# auth info and themes are all in the script directory
+chdir $FindBin::Bin;
+
 
 sub get_setter(){
-  # will needs to go first on 20200929. so set offset to 3
   my @everyone = read_file('ids.txt', chomp=>1);
   my $day_of_year = (localtime)[7];
   my $setter = $everyone[$day_of_year % ($#everyone+1)];
@@ -101,4 +99,4 @@ my $giphy_txt = GiphyTheme::giphy_text();
 # my $edit_note = ". Set tomorrow's theme on <https://github.com/LabNeuroCogDevel/slacktheme_bot/edit/master/manual-theme.txt|github>";
 my $slack = Slack->new;
 my $resp = $slack->msg("<$setter> sets the theme next!", 'random');
-$resp = $slack->msg("It's your turn to set the theme tomorrow. Here's some motivation: $giphy_txt", $setter);
+$resp = $slack->msg("It's your turn to set the theme tomorrow. Here's some insperation: $giphy_txt", $setter);
