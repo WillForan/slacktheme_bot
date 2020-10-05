@@ -119,4 +119,4 @@ my $giphy_txt = GiphyTheme::giphy_text();
 # my $edit_note = ". Set tomorrow's theme on <https://github.com/LabNeuroCogDevel/slacktheme_bot/edit/master/manual-theme.txt|github>";
 my $slack = Slack->new;
 my $resp = $slack->msg("<$setter> sets the theme next!", 'random');
-$resp = $slack->msg("It's your turn to set the theme tomorrow. Here's some insperation: $giphy_txt", $setter);
+$resp = $slack->msg("It's your turn to set the theme next. Here's some insperation: $giphy_txt", $setter);
