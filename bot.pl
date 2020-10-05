@@ -82,19 +82,39 @@ package main;
 use Data::Dumper;
 use File::Slurp;
 use FindBin;
+use Time::Piece;
 # auth info and themes are all in the script directory
 chdir $FindBin::Bin;
 
+sub date_idx{
+   # index days of the year skipping weekends
+   # weirdness around weekends: sat reports same as thursday, sun same as friday
+   my $ymd = shift;
+   my $dt = $ymd?Time::Piece->strptime($ymd,"%Y-%m-%d"):Time::Piece->new();
+   return($dt->yday - $dt->week*2);
+}
 
 sub get_setter(){
   my @everyone = read_file('ids.txt', chomp=>1);
-  my $day_of_year = (localtime)[7];
-  my $setter = $everyone[$day_of_year % ($#everyone+1)];
+  my $setter = $everyone[date_idx() % ($#everyone+1)];
   return $setter;
 }
 
 
 my $setter = "@".get_setter();
+# sometimes we just want to check who is next
+# without sending anythign to slack
+if ($ENV{DRYRUN}){
+  say $setter;
+  exit;
+}
+# or to check that date index works
+if($#ARGV >= 0) {
+   say date_idx($ARGV[0]);
+   exit;
+}
+
+
 my $giphy_txt = GiphyTheme::giphy_text();
 # my $edit_note = ". Set tomorrow's theme on <https://github.com/LabNeuroCogDevel/slacktheme_bot/edit/master/manual-theme.txt|github>";
 my $slack = Slack->new;
