@@ -2,17 +2,24 @@
 use strict; use warnings; use feature qw/say signatures/;
 no warnings qw/experimental::signatures/;
 #
-# send a giphy url for a given theme to the random slack channel
-# - if "manual-theme.txt" has been updated in the last day. theme will be pulled from that
-# - otherwise randomply pulls from theme_list.txt
+# * get a gipphy theme url
+# * pick a user's name from a list based on the day
+# * send messages to slack user and/or channel
 #
-# depends on system running `shuf`, `curl`, and `jq`
+# default:
+#   send theme to user
+#   send user to random
+# see cron
+#   00 17 * * 1,2,3,4,5 bot.pl default
 # 
+# depends on system running `shuf`, `curl`, and `jq`
+#
 # posts json to https://slack.com/api/chat.postMessage to send message
 # WebService::Slack::WebApi is a heavy depend to run auth and send message
 
 # 20200925WF - init. send a giphy to 'random'
 # 20200929WF - send a reminder to a person for them to set a theme.
+# 20201007WF - handle different arguments
 
 package GiphyTheme;
 use File::Slurp;
@@ -86,7 +93,7 @@ use Time::Piece;
 # auth info and themes are all in the script directory
 chdir $FindBin::Bin;
 
-sub date_idx{
+sub date_idx {
    # index days of the year skipping weekends
    # weirdness around weekends: sat reports same as thursday, sun same as friday
    my $ymd = shift;
@@ -94,29 +101,47 @@ sub date_idx{
    return($dt->yday - $dt->week*2);
 }
 
-sub get_setter(){
+sub get_setter($doy=date_idx()){
   my @everyone = read_file('ids.txt', chomp=>1);
-  my $setter = $everyone[date_idx() % ($#everyone+1)];
+  my $setter = $everyone[$doy % ($#everyone+1)];
   return $setter;
 }
 
-
-my $setter = "@".get_setter();
-# sometimes we just want to check who is next
-# without sending anythign to slack
-if ($ENV{DRYRUN}){
-  say $setter;
-  exit;
+sub pick_person($setter){
+   my $giphy_txt = GiphyTheme::giphy_text();
+   # my $edit_note = ". Set tomorrow's theme on <https://github.com/LabNeuroCogDevel/slacktheme_bot/edit/master/manual-theme.txt|github>";
+   my $slack = Slack->new;
+   my $resp = $slack->msg("<$setter> sets the theme next!", 'random');
+   $resp = $slack->msg("It's your turn to set the theme next. Here's some insperation: $giphy_txt", $setter);
+   return $resp
 }
-# or to check that date index works
-if($#ARGV >= 0) {
-   say date_idx($ARGV[0]);
-   exit;
+sub send_theme($send_to){
+   my $giphy_txt = GiphyTheme::giphy_text();
+   # my $edit_note = ". Set tomorrow's theme on <https://github.com/LabNeuroCogDevel/slacktheme_bot/edit/master/manual-theme.txt|github>";
+   my $slack = Slack->new;
+   my $resp = $slack->msg("$giphy_txt", $send_to);
+   return $resp
 }
 
 
-my $giphy_txt = GiphyTheme::giphy_text();
-# my $edit_note = ". Set tomorrow's theme on <https://github.com/LabNeuroCogDevel/slacktheme_bot/edit/master/manual-theme.txt|github>";
-my $slack = Slack->new;
-my $resp = $slack->msg("<$setter> sets the theme next!", 'random');
-$resp = $slack->msg("It's your turn to set the theme next. Here's some insperation: $giphy_txt", $setter);
+
+my $cmd = $#ARGV>=0?$ARGV[0]:"";
+# DRYRUN ./bot.pl     say todays setter
+# ./bot.pl who        "
+# ./bot.pl 20201003   setter on Oct 3rd 2020
+# ./bot.pl YYYYMMDD   setter on date YYYYMMDD
+# ./bot.pl @will      send a random theme to @will
+# ./bot.pl random     send a random theme to the random channel
+# ./bot.pl            pick a setter, send them a message. tell random about it
+if ($ENV{DRYRUN} || $cmd =~ m/who/ ){
+  say '@'.get_setter();
+} elsif($cmd =~ m/^[-\d]+$/) {
+   my $doy = date_idx($cmd);
+   say get_setter($doy), " # ", $doy;
+} elsif($cmd =~ m/^@|random/){
+   send_theme($cmd);
+} else {
+   my $setter = "@".get_setter();
+   pick_person($setter);
+}
+

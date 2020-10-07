@@ -1,6 +1,6 @@
 # Daily theme
 
-Set the user responsible for picking tomorrow's daily theme. Rotate evenly over the calendar year.
+Set the user responsible for picking tomorrow's daily theme. Rotate evenly over the calendar year weekdays.
 
 Setter is
  * is annonced to the `random` channel.
