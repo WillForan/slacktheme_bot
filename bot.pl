@@ -101,9 +101,30 @@ sub date_idx {
    return($dt->yday - $dt->week*2);
 }
 
+sub holidays($holiday_fname="holiday_doy.txt"){
+  return () if not -s $holiday_fname;
+  my @holidays = map {s/[^0-9].*//g;$_} read_file($holiday_fname, chomp=>1);
+}
+
+sub is_holiday($date_idx=date_idx()){
+   my @h = holidays();
+   for my $h (@h){
+      return 1 if $h == $date_idx;
+   }
+   return 0;
+}
+
+sub holiday_offset($doy){
+  my $offset=0;
+  my @holiday_doy = holidays();
+  ++$offset while($offset <= $#holiday_doy and $doy >= $holiday_doy[$offset]);
+  return($offset)
+}
+
 sub get_setter($doy=date_idx()){
+  my $offset = holiday_offset($doy);
   my @everyone = read_file('ids.txt', chomp=>1);
-  my $setter = $everyone[$doy % ($#everyone+1)];
+  my $setter = $everyone[($doy - $offset) % ($#everyone+1)];
   return $setter;
 }
 
@@ -123,25 +144,32 @@ sub send_theme($send_to){
    return $resp
 }
 
-
-
-my $cmd = $#ARGV>=0?$ARGV[0]:"";
-# DRYRUN ./bot.pl     say todays setter
-# ./bot.pl who        "
-# ./bot.pl 20201003   setter on Oct 3rd 2020
-# ./bot.pl YYYYMMDD   setter on date YYYYMMDD
-# ./bot.pl @will      send a random theme to @will
-# ./bot.pl random     send a random theme to the random channel
-# ./bot.pl            pick a setter, send them a message. tell random about it
-if ($ENV{DRYRUN} || $cmd =~ m/who/ ){
-  say '@'.get_setter();
-} elsif($cmd =~ m/^[-\d]+$/) {
-   my $doy = date_idx($cmd);
-   say get_setter($doy), " # ", $doy;
-} elsif($cmd =~ m/^@|random/){
-   send_theme($cmd);
-} else {
-   my $setter = "@".get_setter();
-   pick_person($setter);
+unless(caller){
+  my $cmd = $#ARGV>=0?$ARGV[0]:"";
+  if($cmd eq "pick") {
+     if(is_holiday()){
+        say "holiday!";
+        exit;
+     }
+     my $setter = "@".get_setter();
+     pick_person($setter);
+  }elsif ($cmd =~ m/who/ ){
+    say '@'.get_setter();
+  } elsif($cmd =~ m/^@|random/){
+     send_theme($cmd);
+  } elsif($cmd =~ m/^[-\d]+$/) {
+     my $doy = date_idx($cmd);
+     my $offset = holiday_offset($doy);
+     say get_setter($doy), " # idx=$doy, offset=$offset, holdiday? ", is_holiday($doy);
+  } else {
+     say "USAGE:
+   ./bot.pl pick         pick a setter, send them a message. tell random about it
+   ./bot.pl who          say todays setter (e.g. DRYRUN)
+   ./bot.pl 2020-10-03   setter on Oct 3rd 2020
+   ./bot.pl YYYY-MM-DD   setter on date, also gives index and holiday status
+   ./bot.pl \@will        send a random theme to \@will
+   ./bot.pl random       send a random theme to the random channel
+  ";
+  }
 }
 
