@@ -103,7 +103,7 @@ sub date_idx {
 
 sub holidays($holiday_fname="holiday_doy.txt"){
   return () if not -s $holiday_fname;
-  my @holidays = map {s/[^0-9].*//g;$_} read_file($holiday_fname, chomp=>1);
+  my @holidays = grep {/^\d/} map {s/[^0-9].*//g;$_} read_file($holiday_fname, chomp=>1);
 }
 
 sub is_holiday($date_idx=date_idx()){
