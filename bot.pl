@@ -164,7 +164,7 @@ unless(caller){
      my $message = $ARGV[2];
      my $slack = Slack->new;
      my $resp = $slack->msg($message, $send_to);
-     print JSON::PP->new->encode($resp->{ok}), "\n";
+     print STDERR "ERROR\n" if JSON::PP->new->encode($resp->{ok}) ne "true";
   } elsif($cmd =~ m/^[-\d]+$/) {
      my $doy = date_idx($cmd);
      my $offset = holiday_offset($doy);

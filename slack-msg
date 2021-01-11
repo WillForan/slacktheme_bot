@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+cd $(dirname $0)
+# TODO. use tty to test if we have stdin for message
+[ $# -lt 2 ] && echo "
+USAGE: 
+  $(basename $0) @person message
+EXAMPLE:
+  try_long_process; $(basename $0) @will \$_ process finished with status \$?
+" && exit 1
+
+who="$1"; shift
+[[ ! $who =~ ^@|random ]] && echo "bad person. try e.g. '@will' or 'random'" && exit 1
+./bot.pl message $who "$*"
