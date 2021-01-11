@@ -9,5 +9,5 @@ EXAMPLE:
 " && exit 1
 
 who="$1"; shift
-[[ ! $who =~ ^@|random ]] && echo "bad person. try e.g. '@will' or 'random'" && exit 1
+[[ ! $who =~ ^@|random|general ]] && echo "bad person. try e.g. '@will' or 'random'" && exit 1
 ./bot.pl message $who "$*"
