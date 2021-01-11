@@ -90,6 +90,7 @@ use Data::Dumper;
 use File::Slurp;
 use FindBin;
 use Time::Piece;
+use JSON::PP;
 # auth info and themes are all in the script directory
 chdir $FindBin::Bin;
 
@@ -157,6 +158,13 @@ unless(caller){
     say '@'.get_setter();
   } elsif($cmd =~ m/^@|random/){
      send_theme($cmd);
+  } elsif($cmd =~ m/^message/){
+     die "need a person and message: bot.pl message \@will 'hello'" if $#ARGV!=2;
+     my $send_to = $ARGV[1];
+     my $message = $ARGV[2];
+     my $slack = Slack->new;
+     my $resp = $slack->msg($message, $send_to);
+     print JSON::PP->new->encode($resp->{ok}), "\n";
   } elsif($cmd =~ m/^[-\d]+$/) {
      my $doy = date_idx($cmd);
      my $offset = holiday_offset($doy);
